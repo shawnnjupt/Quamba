@@ -135,6 +135,7 @@ def create_quantized_block(
         )
         block.layer_idx = layer_idx
     else:
+        # print("this way?")
         block_norm = norm_cfg.pop("norm", "QRMSNorm")
         supported_norms = ["QRMSNorm", "RMSNorm"]
         if block_norm not in supported_norms:

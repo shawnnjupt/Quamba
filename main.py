@@ -19,6 +19,7 @@ def main(args):
     model, tokenizer, is_quamba = build_mamba_and_tokenizer(args, model_type)
     model.config.use_cache = False
     logs = {}
+    print(model)
     
     if args.quantize:
         """
@@ -32,7 +33,6 @@ def main(args):
         """
         logging.info(f"Evaluating the performance of fp16 model")
     model.eval()
-    
     logs = {}
     if args.eval_ppl:
         logging.info(f"Evaluating ppl result (quantized), dataset: {args.ppl_dataset}")

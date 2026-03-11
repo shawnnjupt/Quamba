@@ -1,0 +1,38 @@
+{
+    "lm_eval": {
+        "lambada_openai": {
+            "perplexity,none": 4.660259565273134,
+            "perplexity_stderr,none": 0.10381090809649635,
+            "acc,none": 0.6664079177178343,
+            "acc_stderr,none": 0.006568860122987718
+        }
+    },
+    "args": {
+        "model": "quamba2-2.7b-w4a8",
+        "verbose": false,
+        "batch_size": 16,
+        "task_list": [
+            "lambada_openai"
+        ],
+        "eval_zero_shot": true,
+        "eval_few_shot": false,
+        "fewshot": 0,
+        "eval_generation": false,
+        "testing": false,
+        "eval_ppl": false,
+        "ppl_dataset": "wikitext2",
+        "log_dir": "./logs",
+        "quantize": false,
+        "calib_data_num": 512,
+        "calib_seqlen": 512,
+        "pretrained_dir": "/deltadisk/congxiao/model",
+        "group_heads": true,
+        "quantize_embedding": false,
+        "quantize_lm_head": false,
+        "apply_gptq": false,
+        "w_bits": 8,
+        "a_bits": 8,
+        "hybrid_blocks": false,
+        "hybrid_blocks_config": null
+    }
+}

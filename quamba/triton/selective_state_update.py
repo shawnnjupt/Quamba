@@ -14,6 +14,11 @@ from einops import rearrange, repeat
 
 from mamba_ssm.ops.triton.softplus import softplus
 
+from quamba.fxp_units import get_exp_tl, get_softplus_tl
+_exp_tl = get_exp_tl()
+_softplus_tl = get_softplus_tl()
+
+
 @triton.heuristics({"HAS_DT_BIAS": lambda args: args["dt_bias_ptr"] is not None})
 @triton.heuristics({"HAS_DT_BIAS_SCALE": lambda args: args["dt_bias_scale"] is not None})
 @triton.heuristics({"HAS_D": lambda args: args["D_ptr"] is not None})
@@ -320,24 +325,33 @@ def _quamba2_sscan_update_kernel(
     state_scale_ptr = state_scale_ptr + x_head_gidx * stride_state_scale_head
     state_scale_ptrs = state_scale_ptr + (x_dim_gidx[:, None] * stride_state_scale_dim + offs_n[None, :] * stride_state_scale_dstate)
     state_scale_load = tl.load(state_scale_ptrs, mask=(x_dim_gidx[:, None] < ndim_groups) & (offs_n[None, :] < dstate), other=0.0)
-    state = state_scale_load * tl.load(state_ptrs, mask=(offs_m[:, None] < dim) & (offs_n[None, :] < dstate), other=0.0).to(tl.float32)
+    # state = state_scale_load * tl.load(state_ptrs, mask=(offs_m[:, None] < dim) & (offs_n[None, :] < dstate), other=0.0).to(tl.float32)
+    
+    state = tl.load(state_ptrs, mask=(offs_m[:, None] < dim) & (offs_n[None, :] < dstate), other=0.0).to(tl.float32)
+
     if not TIE_HDIM:
         dt = tl.load(dt_scale) * tl.load(dt_ptrs, mask=offs_m < dim, other=0.0).to(tl.float32)
         if HAS_DT_BIAS:
             dt += tl.load(dt_bias_ptrs, mask=offs_m < dim, other=0.0).to(tl.float32)
         if DT_SOFTPLUS:
-            dt = softplus(dt)
+            # dt = softplus(dt)
+            dt =_softplus_tl(dt)
         A_log = tl.load(A_log_ptrs, mask=(offs_m[:, None] < dim) & (offs_n[None, :] < dstate), other=0.0).to(tl.float32)
-        A = -tl.exp(tl.load(A_log_scale) * A_log)
-        dA = tl.exp(A * dt[:, None])
+        # A = -tl.exp(tl.load(A_log_scale) * A_log)
+        # dA = tl.exp(A * dt[:, None])
+        A = -_exp_tl(tl.load(A_log_scale) * A_log)
+        dA = _exp_tl(A * dt[:, None])
     else:
         dt = tl.load(dt_scale) * tl.load(dt_ptr).to(tl.float32)
         if HAS_DT_BIAS:
             dt += tl.load(dt_bias_ptr).to(tl.float32)
         if DT_SOFTPLUS:
-            dt = softplus(dt)
-        A = -tl.exp(tl.load(A_log_scale) * tl.load(A_log_ptr).to(tl.float32))
-        dA = tl.exp(A * dt)  # scalar, not a matrix
+            # dt = softplus(dt)
+            dt =_softplus_tl(dt)
+        # A = -tl.exp(tl.load(A_log_scale) * tl.load(A_log_ptr).to(tl.float32))
+        # dA = tl.exp(A * dt)  # scalar, not a matrix
+        A = -_exp_tl(tl.load(A_log_scale) * tl.load(A_log_ptr).to(tl.float32))
+        dA = _exp_tl(A * dt)  # scalar, not a matrix        
 
     B = tl.load(B_scale_ptr) * tl.load(B_ptrs, mask=offs_n < dstate, other=0.0).to(tl.float32)
     C = tl.load(C_scale_ptr) * tl.load(C_ptrs, mask=offs_n < dstate, other=0.0).to(tl.float32)
@@ -352,8 +366,53 @@ def _quamba2_sscan_update_kernel(
         dB = B * dt  # vector of size (dstate,)
     state = state * dA + dB * x[:, None]
     # !!!!!!!!!!!!!! This is important !!!!!!!!!!!!!! Triton division seems to be not numerical stable
-    qstates = tl.clamp(tl.extra.cuda.libdevice.rint((state*1e6) / (state_scale_load*1e6)), -128, 127) # Triton 3.0.0 required
-    tl.store(state_ptrs, qstates, mask=(offs_m[:, None] < dim) & (offs_n[None, :] < dstate))
+    # qstates = tl.clamp(tl.extra.cuda.libdevice.rint((state*1e6) / (state_scale_load*1e6)), -128, 127) # Triton 3.0.0 required
+    # # tl.store(state_ptrs, qstates, mask=(offs_m[:, None] < dim) & (offs_n[None, :] < dstate))
+
+    # dequant_state = qstates * state_scale_load
+    # tl.store(state_ptrs, dequant_state.to(tl.float16), mask=(offs_m[:, None] < dim) & (offs_n[None, :] < dstate))
+    # state = dequant_state
+
+
+    # case1 : per tensor
+    # 1. 找到当前 Block 中 state 的绝对最大值
+    abs_state = tl.abs(state)
+    max_val = tl.max(abs_state)
+    
+    # 策略：只取最大值的 90% 或者使用一个常数项保护
+    # 这样可以让大部分数值量化后的有效位更多
+    clamped_max = max_val
+    
+    exponent = tl.math.floor(tl.math.log2(127.0 / (clamped_max + 1e-6)))
+    # 限制 exponent 不要跳变太剧烈
+    dynamic_pot_scale = tl.math.exp2(exponent)
+    
+    # 4. 执行量化模拟 (Quantize -> Clamp -> Dequantize)
+    q_state = tl.extra.cuda.libdevice.rint(state * dynamic_pot_scale)
+    q_state = tl.clamp(q_state, -128.0, 127.0)
+    state = q_state / dynamic_pot_scale
+    # --- [修改点 4] 存储反量化后的 fp16 值 ---
+    # 原代码: tl.store(state_ptrs, qstates, ...)
+    tl.store(state_ptrs, state.to(tl.float16), mask=(offs_m[:, None] < dim) & (offs_n[None, :] < dstate))
+
+
+
+    # # case 2: per row
+    # row_max = tl.max(tl.abs(state), axis=1) 
+    # row_exponent = tl.math.floor(tl.math.log2(127*1e6 / ((row_max + 1e-6)*1e6)))
+    # # 限制指数范围，防止 exp2 溢出 (通常 -60 到 60 足够)
+    # row_exponent = tl.clamp(row_exponent, -60.0, 60.0)
+    # # 3. 计算每一行的 PoT 缩放因子: scale = 2^exponent
+    # row_pot_scale = tl.math.exp2(row_exponent) 
+    # # 4. 执行量化模拟 (Quantize -> Clamp -> Dequantize)
+    # # 使用 row_pot_scale[:, None] 将其广播到 [BLOCK_SIZE_M, BLOCK_SIZE_DSTATE]
+    # q_state = tl.extra.cuda.libdevice.rint(state * row_pot_scale[:, None])
+    # q_state = tl.clamp(q_state, -128.0, 127.0)
+
+    # state = (q_state*1e6) / (row_pot_scale[:, None]*1e6)
+    # tl.store(state_ptrs, state.to(tl.float16), mask=(offs_m[:, None] < dim) & (offs_n[None, :] < dstate))
+
+
     out = tl.sum(state * C[None, :], axis=1)
     if HAS_D:
         out += x * D
@@ -443,11 +502,15 @@ def quamba2_sscan_update_triton(state, q_x, x_scales, x_head_group_range, x_dim_
     z_strides = ((q_z.stride(0), q_z.stride(1), q_z.stride(2)) if q_z is not None else (0, 0, 0))
     # We don't want autotune since it will overwrite the state
     # We instead tune by hand.
-    BLOCK_SIZE_M, num_warps = ((32, 4) if dstate <= 16
-                               else ((32, 4) if dstate <= 32 else
-                                     ((32, 4) if dstate <= 64 else
-                                      ((32, 4) if dstate <= 128 else
-                                       ((16, 8))))))
+    # BLOCK_SIZE_M, num_warps = ((32, 4) if dstate <= 16
+    #                            else ((32, 4) if dstate <= 32 else
+    #                                  ((32, 4) if dstate <= 64 else
+    #                                   ((32, 4) if dstate <= 128 else
+    #                                    ((16, 8))))))
+
+    BLOCK_SIZE_M = 4 
+    num_warps = 4 # 即使 BLOCK_SIZE 小，建议 num_warps 至少为 4 以保持基本的并行度
+
     tie_hdim = q_A_log.stride(-1) == 0 and q_A_log.stride(-2) == 0 and q_dt.stride(-1) == 0 and dt_bias.stride(-1) == 0
     with torch.cuda.device(q_x.device.index):
         _quamba2_sscan_update_kernel[grid](

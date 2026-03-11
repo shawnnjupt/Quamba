@@ -9,10 +9,11 @@ import torch
 import torch.nn as nn
 from einops import rearrange, repeat
 
-from quamba.quant_utils import quantize_tensor_per_tensor_absmax
+from quamba.quant_utils import quantize_tensor_per_tensor_absmax, quantize_tensor_per_tensor_absmax_pot
 from quamba.triton.selective_state_update import quant_sscan_update_triton, quamba2_sscan_update_triton
 from quamba.triton.quant_ssd_combined import _quant_mamba_chunk_scan_combined_fwd, _quamba2_mamba_chunk_scan_combined_fwd
 
+import os
 
 class Quamba2ChunkScan(nn.Module):
 
@@ -34,6 +35,8 @@ class Quamba2ChunkScan(nn.Module):
         self.ndim_groups = ndim_groups
         self.delta_softplus = delta_softplus
         self.dt_limit = dt_limit
+        
+        self._update_dumped = False
 
         nheads = d_ssm // headdim
         # create space for dt bias
@@ -102,7 +105,7 @@ class Quamba2ChunkScan(nn.Module):
         qchunkscan = cls(d_ssm, headdim, d_state, ngroups, D_has_hdim,
                          chunk_size, nhead_groups, ndim_groups, delta_softplus, dt_limit)
 
-        A_log_quant, A_log_scale = quantize_tensor_per_tensor_absmax(A_log, n_bits=8)
+        A_log_quant, A_log_scale = quantize_tensor_per_tensor_absmax_pot(A_log, n_bits=8)
         qchunkscan.A_log = A_log_quant.to(torch.int8)
         qchunkscan.A_log_scale = A_log_scale.float().to(A_log.device)
 
@@ -116,7 +119,7 @@ class Quamba2ChunkScan(nn.Module):
 
         if D is not None:
             # rearrange(self.D, "(h p) -> h p", p=self.headdim) if self.D_has_hdim else self.D,
-            D_quant, D_scale = quantize_tensor_per_tensor_absmax(D, n_bits=8)
+            D_quant, D_scale = quantize_tensor_per_tensor_absmax_pot(D, n_bits=8)
             qchunkscan.D = D_quant.to(torch.int8)
             qchunkscan.D_scale = D_scale.float().to(D.device)
         else:
@@ -156,7 +159,8 @@ class Quamba2ChunkScan(nn.Module):
 
     def set_chunk_scan_fn(self):
 
-        if self.x_head_group_range is not None and self.x_dim_group_range is not None:            
+        if self.x_head_group_range is not None and self.x_dim_group_range is not None:
+            # print("this? set chunk")            
             # get chunk_scan_combined_fwd
             # scales must be on cuda before using partial for triton kernels
             self.chunk_scan_combined_fwd = partial(
@@ -236,11 +240,53 @@ class Quamba2ChunkScan(nn.Module):
         B = rearrange(B, "b (g n) -> b g n", g=self.ngroups)
         C = rearrange(C, "b (g n) -> b g n", g=self.ngroups)
         x_reshaped = rearrange(x, "b (h p) -> b h p", p=self.headdim)
+        # # ================= dump inputs (only once) =================
+        # if not self._update_dumped:
+        #     dump_dir = "./data"
+        #     os.makedirs(dump_dir, exist_ok=True)
+
+        #     def dump(name, tensor):
+        #         if tensor is None:
+        #             torch.save(None, f"{dump_dir}/{name}.bin")
+        #         else:
+        #             torch.save(tensor.detach().cpu(), f"{dump_dir}/{name}.bin")
+
+        #     dump("state", ssm_state)
+        #     dump("q_x", x_reshaped)
+        #     dump("q_dt", dt)
+        #     dump("q_B", B)
+        #     dump("q_C", C)
+        #     dump("q_z", z)
+
+        #     # scales / params（算子依赖的）
+        #     dump("x_scales", self.x_scales)
+        #     dump("dt_scale", self.dt_scale)
+        #     dump("B_scale", self.B_scale)
+        #     dump("C_scale", self.C_scale)
+        #     dump("z_scale", self.z_scale)
+
+        #     dump("A_log", self.A_log)
+        #     dump("A_log_scale", self.A_log_scale)
+        #     dump("D", self.D)
+        #     dump("D_scale", self.D_scale)
+        #     dump("dt_bias", self.dt_bias)
+        # print("ssm_state", ssm_state)
+        # print("ssm_state_dtype",ssm_state.dtype)
+        # print("ssm_state_shape",ssm_state.shape)
+        #     dump("x_head_group_range", self.x_head_group_range)
+        #     dump("x_dim_group_range", self.x_dim_group_range)
+            
+        # ================= call kernel =================
         y = self.chunk_scan_combined_update(
             state=ssm_state, q_x=x_reshaped, q_dt=dt, q_B=B, q_C=C, 
             q_z=z if z is not None else None,
             z_scale=self.z_scale.cuda() if z is not None else None,
         )
+        # ================= dump output (only once) =================
+        # if not self._update_dumped:
+        #     torch.save(y.detach().cpu(), "./data/output_y.bin")
+        #     self._update_dumped = True
+
         return y
 
     def __repr__(self):

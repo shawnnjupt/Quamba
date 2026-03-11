@@ -1,0 +1,75 @@
+{
+    "lm_eval": {
+        "lambada_openai": {
+            "perplexity,none": 9.585897251666946,
+            "perplexity_stderr,none": 0.2698507928303583,
+            "acc,none": 0.5098001164370269,
+            "acc_stderr,none": 0.006964639471873754
+        }
+    },
+    "args": {
+        "model": "/deltadisk/congxiao/model/mamba2-780m",
+        "verbose": false,
+        "batch_size": 16,
+        "task_list": [
+            "lambada_openai"
+        ],
+        "eval_zero_shot": true,
+        "eval_few_shot": false,
+        "fewshot": 0,
+        "eval_generation": false,
+        "testing": false,
+        "eval_ppl": false,
+        "ppl_dataset": "wikitext2",
+        "log_dir": "logs",
+        "quantize": true,
+        "calib_data_num": 512,
+        "calib_seqlen": 512,
+        "pretrained_dir": "./pretrained_models",
+        "group_heads": true,
+        "quantize_embedding": true,
+        "quantize_lm_head": true,
+        "apply_gptq": true,
+        "w_bits": 8,
+        "a_bits": 8,
+        "hybrid_blocks": false,
+        "hybrid_blocks_config": null
+    }
+}{
+    "lm_eval": {
+        "lambada_openai": {
+            "perplexity,none": 8.623185269003441,
+            "perplexity_stderr,none": 0.24016436455783943,
+            "acc,none": 0.5243547448088492,
+            "acc_stderr,none": 0.006957708960295877
+        }
+    },
+    "args": {
+        "model": "/deltadisk/congxiao/model/mamba2-780m",
+        "verbose": false,
+        "batch_size": 16,
+        "task_list": [
+            "lambada_openai"
+        ],
+        "eval_zero_shot": true,
+        "eval_few_shot": false,
+        "fewshot": 0,
+        "eval_generation": false,
+        "testing": false,
+        "eval_ppl": false,
+        "ppl_dataset": "wikitext2",
+        "log_dir": "logs",
+        "quantize": true,
+        "calib_data_num": 512,
+        "calib_seqlen": 512,
+        "pretrained_dir": "./pretrained_models",
+        "group_heads": true,
+        "quantize_embedding": true,
+        "quantize_lm_head": true,
+        "apply_gptq": true,
+        "w_bits": 8,
+        "a_bits": 8,
+        "hybrid_blocks": false,
+        "hybrid_blocks_config": null
+    }
+}

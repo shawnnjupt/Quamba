@@ -1,0 +1,149 @@
+{
+    "lm_eval": {
+        "lambada_openai": {
+            "perplexity,none": 4.399276462235522,
+            "perplexity_stderr,none": 0.10006438675503648,
+            "acc,none": 0.6712594605084417,
+            "acc_stderr,none": 0.006544612151352775
+        }
+    },
+    "args": {
+        "model": "/deltadisk/congxiao/model/mamba2-2.7b",
+        "verbose": false,
+        "batch_size": 16,
+        "task_list": [
+            "lambada_openai"
+        ],
+        "eval_zero_shot": true,
+        "eval_few_shot": false,
+        "fewshot": 0,
+        "eval_generation": false,
+        "testing": false,
+        "eval_ppl": false,
+        "ppl_dataset": "wikitext2",
+        "log_dir": "logs",
+        "quantize": true,
+        "calib_data_num": 512,
+        "calib_seqlen": 512,
+        "pretrained_dir": "./pretrained_models",
+        "group_heads": true,
+        "quantize_embedding": true,
+        "quantize_lm_head": true,
+        "apply_gptq": true,
+        "w_bits": 8,
+        "a_bits": 8,
+        "hybrid_blocks": false,
+        "hybrid_blocks_config": null
+    }
+}{
+    "lm_eval": {
+        "lambada_openai": {
+            "perplexity,none": 4.446366141853954,
+            "perplexity_stderr,none": 0.10106887282897171,
+            "acc,none": 0.6600038812342325,
+            "acc_stderr,none": 0.006599671169668105
+        }
+    },
+    "args": {
+        "model": "/deltadisk/congxiao/model/mamba2-2.7b",
+        "verbose": false,
+        "batch_size": 16,
+        "task_list": [
+            "lambada_openai"
+        ],
+        "eval_zero_shot": true,
+        "eval_few_shot": false,
+        "fewshot": 0,
+        "eval_generation": false,
+        "testing": false,
+        "eval_ppl": false,
+        "ppl_dataset": "wikitext2",
+        "log_dir": "logs",
+        "quantize": true,
+        "calib_data_num": 512,
+        "calib_seqlen": 512,
+        "pretrained_dir": "./pretrained_models",
+        "group_heads": true,
+        "quantize_embedding": true,
+        "quantize_lm_head": true,
+        "apply_gptq": true,
+        "w_bits": 8,
+        "a_bits": 8,
+        "hybrid_blocks": false,
+        "hybrid_blocks_config": null
+    }
+}{
+    "lm_eval": {
+        "lambada_openai": {
+            "perplexity,none": 5.327188467901952,
+            "perplexity_stderr,none": 0.12269154111648387,
+            "acc,none": 0.6277896371045992,
+            "acc_stderr,none": 0.006734624319305143
+        }
+    },
+    "args": {
+        "model": "/deltadisk/congxiao/model/mamba2-2.7b",
+        "verbose": false,
+        "batch_size": 16,
+        "task_list": [
+            "lambada_openai"
+        ],
+        "eval_zero_shot": true,
+        "eval_few_shot": false,
+        "fewshot": 0,
+        "eval_generation": false,
+        "testing": false,
+        "eval_ppl": false,
+        "ppl_dataset": "wikitext2",
+        "log_dir": "logs",
+        "quantize": true,
+        "calib_data_num": 512,
+        "calib_seqlen": 512,
+        "pretrained_dir": "./pretrained_models",
+        "group_heads": true,
+        "quantize_embedding": true,
+        "quantize_lm_head": true,
+        "apply_gptq": true,
+        "w_bits": 8,
+        "a_bits": 8,
+        "hybrid_blocks": false,
+        "hybrid_blocks_config": null
+    }
+}{
+    "lm_eval": {
+        "lambada_openai": {
+            "perplexity,none": 4.360564615725607,
+            "perplexity_stderr,none": 0.09974360528763787,
+            "acc,none": 0.6710653987968174,
+            "acc_stderr,none": 0.006545597195850572
+        }
+    },
+    "args": {
+        "model": "/deltadisk/congxiao/model/mamba2-2.7b",
+        "verbose": false,
+        "batch_size": 16,
+        "task_list": [
+            "lambada_openai"
+        ],
+        "eval_zero_shot": true,
+        "eval_few_shot": false,
+        "fewshot": 0,
+        "eval_generation": false,
+        "testing": false,
+        "eval_ppl": false,
+        "ppl_dataset": "wikitext2",
+        "log_dir": "logs",
+        "quantize": true,
+        "calib_data_num": 512,
+        "calib_seqlen": 512,
+        "pretrained_dir": "./pretrained_models",
+        "group_heads": true,
+        "quantize_embedding": true,
+        "quantize_lm_head": true,
+        "apply_gptq": true,
+        "w_bits": 8,
+        "a_bits": 8,
+        "hybrid_blocks": false,
+        "hybrid_blocks_config": null
+    }
+}

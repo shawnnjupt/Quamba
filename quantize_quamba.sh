@@ -1,0 +1,13 @@
+CUDA_VISIBLE_DEVICES=1 python main.py /deltadisk/congxiao/model/mamba2-2.7b \
+--batch_size 16 \
+--eval_zero_shot \
+--task_list lambada_openai \
+--quantize \
+--group_heads \
+--apply_gptq \
+--quantize_embedding \
+--quantize_lm_head \
+--w_bits 8 \
+--a_bits 8 \
+--pretrained_dir ./pretrained_models \
+--log_dir logs

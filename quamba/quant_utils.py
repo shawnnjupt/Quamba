@@ -27,6 +27,46 @@ def quantize_tensor_per_tensor_absmax(
     return w, scales.float()
 
 
+
+@torch.no_grad()
+def quantize_tensor_per_tensor_absmax_pot(
+    w: torch.Tensor,
+    n_bits: int,
+    clip_ratio: float = 1.0,
+    mode: str = "floor",  # "round" | "floor" | "ceil"
+):
+    # int range (signed, symmetric)
+    q_min = -(2 ** (n_bits - 1))
+    q_max =  (2 ** (n_bits - 1) - 1)
+
+    # absmax
+    w_max = w.abs().amax().clamp(min=1e-5)
+    if clip_ratio < 1.0:
+        w_max = w_max * clip_ratio
+
+    # original scale
+    scale = w_max / q_max
+
+    # POT scale
+    log2_scale = torch.log2(scale)
+    if mode == "round":
+        log2_scale = torch.round(log2_scale)
+    elif mode == "floor":
+        log2_scale = torch.floor(log2_scale)
+    elif mode == "ceil":
+        log2_scale = torch.ceil(log2_scale)
+    else:
+        raise ValueError(f"Unknown mode {mode}")
+
+    scale_pot = torch.pow(2.0, log2_scale)
+
+    # quantize
+    w_q = torch.round(w / scale_pot)
+    w_q = torch.clamp(w_q, q_min, q_max)
+
+    return w_q.to(torch.int8 if n_bits <= 8 else torch.int32), scale_pot
+
+
 @torch.no_grad()
 def quantize_tensor_head_channel_grouping(w, w_head_group_range, w_dim_group_range, n_bits, scales=None, fake_quant=False, clip_ratio=1.0):
 

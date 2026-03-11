@@ -8,6 +8,10 @@ import torch.nn.functional as F
 
 from einops import rearrange, repeat
 
+
+from quamba.fxp_units import exp, silu, softplus
+
+
 from mamba_ssm.modules.mamba2 import Mamba2
 from mamba_ssm.ops.triton.layernorm_gated import RMSNorm as RMSNormGated
 from mamba_ssm.ops.triton.ssd_combined import mamba_chunk_scan_combined
@@ -38,6 +42,9 @@ from .qConvLayer import QCausalConv1D, Quamb2Conv1D
 from .qHadamard import Hadamard, QHadamard
 from .qNorm import QRMSNormGated
 from .qChunkScan import Quamba2ChunkScan
+
+
+ssd_times=0
 
 def get_group_params(scales, ngroups, device):
     if isinstance(scales, list):
@@ -572,7 +579,7 @@ class W4A16QMamba2(nn.Module):
             [d_mlp, d_mlp, self.d_ssm, self.d_ssm + 2 * self.ngroups * self.d_state, self.nheads],
             dim=-1
         ) #NOTE(brian1009): z0, x0 will have shape of (B, L, 0) for Mamba2
-
+        
         #NOTE(brian1009): Only need to be considered in generation stage. Skip for now.
         if conv_state is not None:
             if cu_seqlens is None:
@@ -732,6 +739,7 @@ class W4A16QMamba2(nn.Module):
         return conv_state, ssm_state
 
 
+
 class W4A8QMamba2(nn.Module):
 
     def __init__(
@@ -771,6 +779,7 @@ class W4A8QMamba2(nn.Module):
         self.d_conv = d_conv
         self.conv_init = conv_init
         self.expand = expand
+        # self.ssd_times = 0
         self.process_group = process_group
         assert self.process_group is None, "Only support process_group=None for now"
         self.sequence_parallel = sequence_parallel
@@ -939,11 +948,16 @@ class W4A8QMamba2(nn.Module):
             inference_batch = cu_seqlens.shape[0] - 1 if cu_seqlens is not None else batch
             conv_state, ssm_state = self._get_states_from_cache(inference_params, inference_batch)
             if inference_params.seqlen_offset > 0:
+                # print("begin step")
                 # The states are updated inplace
                 out, _, _ = self.step(u, conv_state, ssm_state)
                 return out
-
+        global ssd_times
+        ssd_times+=1
+        # print("ssd_time=",ssd_times)
+        # print(f"input_u_type={u.dtype}")
         zxbcdt = self.in_proj(u)  # (B, L, d_in_proj) or (B * L, d_in_proj)
+        # print(f"zxbcdt_type={zxbcdt.dtype}")
         if seqlen_og is not None:
             zxbcdt = rearrange(zxbcdt, "(b l) d -> b l d", l=seqlen)
         
@@ -972,8 +986,15 @@ class W4A8QMamba2(nn.Module):
         x = rearrange(x, "b (h p) l -> b l h p", p=self.headdim)
         B = rearrange(B, "b (g n) l -> b l g n", g=self.ngroups)
         C = rearrange(C, "b (g n) l -> b l g n", g=self.ngroups)
-        y = self.qchunk_scan(x, dt, B, C, z=None, return_final_states=ssm_state is not None)
+        # print(f"n_groups={self.ngroups}")
+        # print("next qchunk_scan")
+        # print(f"x_dype={x.dtype}")
+        # print(f"dt_dype={dt.dtype}")
+        # print(f"B_dype={B.dtype}")
+        # print(f"C_dype={C.dtype}")
 
+        y = self.qchunk_scan(x, dt, B, C, z=None, return_final_states=ssm_state is not None)
+        # print(f"y_dype={y.dtype}")
         if ssm_state is not None:
             y, last_state = y
             if cu_seqlens is None:
@@ -1092,7 +1113,7 @@ class W8A8QMamba2(nn.Module):
         bias=False,
         conv_bias=True,
         # Fused kernel and sharding options
-        chunk_size=256,
+        chunk_size=8,
         use_mem_eff_path=True,
         layer_idx=None,  # Absorb kwarg for general module
         process_group=None,
@@ -1129,8 +1150,9 @@ class W8A8QMamba2(nn.Module):
         self.use_mem_eff_path = use_mem_eff_path
         self.layer_idx = layer_idx
         assert bias is False, "Only support bias=False for now"
-        self.act = nn.SiLU()
-
+        # self.act = nn.SiLU()
+        self.act=silu
+        self._dumped = False
         # Order: [z, x, B, C, dt]
         d_in_proj = 2 * self.d_inner + 2 * self.ngroups * self.d_state + self.nheads
         self.in_proj = W8A8B8O8LinearParallel(self.d_model, d_in_proj)
@@ -1279,6 +1301,7 @@ class W8A8QMamba2(nn.Module):
             conv_state, ssm_state = self._get_states_from_cache(inference_params, inference_batch)
             if inference_params.seqlen_offset > 0:
                 # The states are updated inplace
+                # print("begin step")
                 out, _, _ = self.step(u, conv_state, ssm_state)
                 return out
 
@@ -1311,6 +1334,24 @@ class W8A8QMamba2(nn.Module):
         x = rearrange(x, "b (h p) l -> b l h p", p=self.headdim)
         B = rearrange(B, "b (g n) l -> b l g n", g=self.ngroups)
         C = rearrange(C, "b (g n) l -> b l g n", g=self.ngroups)
+
+        # if not self._dumped:
+        #     self._dumped = True
+        #     print("dt_shape=",dt.shape)
+        #     base_dir = "/deltadisk/congxiao/code/github/Quamba/data/compare"
+        #     print("dt=",dt)
+        #     bin_path = f"{base_dir}/dt_input.bin"
+        #     txt_path = f"{base_dir}/dt_input.txt"
+        #     out_cpu = dt.detach().contiguous().cpu()
+        #     out_np = out_cpu.numpy()
+        #     # 1. 写 binary（raw float16）
+        #     out_np.tofile(bin_path)
+        #     # 2. 写 txt（人可读）
+        #     with open(txt_path, "w") as f:
+        #         flat = out_np.reshape(-1)
+        #         for v in flat:
+        #             f.write(f"{float(v):.6f}\n")
+        # print(f"dt_shape=",dt.shape)
         y = self.qchunk_scan(x, dt, B, C, z=None, return_final_states=ssm_state is not None)
 
         if ssm_state is not None:
@@ -1324,14 +1365,59 @@ class W8A8QMamba2(nn.Module):
         if self.rmsnorm:
             y = self.norm(y, z)
         if d_mlp > 0:
-            y = torch.cat([F.silu(z0) * x0, y], dim=-1)
+            # print("d_mlp")
+            # y = torch.cat([F.silu(z0) * x0, y], dim=-1)
+            y = torch.cat([silu(z0) * x0, y], dim=-1)
         if seqlen_og is not None:
             y = rearrange(y, "b l d -> (b l) d")
         # Output projection
         y = self.had(y) # input fp16, output is int8
         out = self.out_proj(y) # HadW8A8BF16OF16Linear: input int8, output is fp16
-        return out
 
+
+        return out
+        # return self.prefill_step(u)[0]
+
+    def prefill_step(self, u):
+        """
+        u: (B, L, D)
+        只改这里
+        """
+        B, L, _ = u.shape
+
+        # ------------------------------------------------------------
+        # ✅ 1️⃣ 老版本 InferenceParams：只传 2 个参数
+        # ------------------------------------------------------------
+        from mamba_ssm.utils.generation import InferenceParams
+
+        inference_params = InferenceParams(
+            max_seqlen=L,
+            max_batch_size=B,
+        )
+
+        # ------------------------------------------------------------
+        # ✅ 2️⃣ 用官方 cache 创建 conv_state / ssm_state
+        #    （这是 Quamba2 唯一正确的 state 形态）
+        # ------------------------------------------------------------
+        conv_state, ssm_state = self._get_states_from_cache(
+            inference_params,
+            batch_size=B,
+        )
+
+        # ------------------------------------------------------------
+        # ✅ 3️⃣ step 跑 prefill
+        # ------------------------------------------------------------
+        outputs = []
+        for t in range(L):
+            inference_params.seqlen_offset = t
+            out, conv_state, ssm_state = self.step(
+                u[:, t:t + 1],
+                conv_state,
+                ssm_state,
+            )
+            outputs.append(out)
+
+        return torch.cat(outputs, dim=1), conv_state, ssm_state
 
     def step(self, hidden_states, conv_state, ssm_state):
         assert hidden_states.shape[1] == 1, "Only support decoding with 1 token at a time for now"

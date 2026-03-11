@@ -1,0 +1,616 @@
+{
+    "lm_eval": {
+        "hellaswag": {
+            "acc,none": 0.4874526986656045,
+            "acc_stderr,none": 0.0049882100338320134,
+            "acc_norm,none": 0.6459868552081258,
+            "acc_norm_stderr,none": 0.004772358395130443
+        }
+    },
+    "args": {
+        "model": "quamba2-2.7b-w8a8",
+        "verbose": false,
+        "batch_size": 16,
+        "task_list": [
+            "hellaswag"
+        ],
+        "eval_zero_shot": true,
+        "eval_few_shot": false,
+        "fewshot": 0,
+        "eval_generation": false,
+        "testing": false,
+        "eval_ppl": false,
+        "ppl_dataset": "wikitext2",
+        "log_dir": "./logs",
+        "quantize": false,
+        "calib_data_num": 512,
+        "calib_seqlen": 512,
+        "pretrained_dir": "/deltadisk/congxiao/code/github/Quamba/pretrained_models/ut-enyac",
+        "group_heads": true,
+        "quantize_embedding": false,
+        "quantize_lm_head": false,
+        "apply_gptq": false,
+        "w_bits": 8,
+        "a_bits": 8,
+        "hybrid_blocks": false,
+        "hybrid_blocks_config": null
+    }
+}{
+    "lm_eval": {
+        "winogrande": {
+            "acc,none": 0.6456195737963694,
+            "acc_stderr,none": 0.013443314368356087
+        }
+    },
+    "args": {
+        "model": "quamba2-2.7b-w8a8",
+        "verbose": false,
+        "batch_size": 16,
+        "task_list": [
+            "winogrande"
+        ],
+        "eval_zero_shot": true,
+        "eval_few_shot": false,
+        "fewshot": 0,
+        "eval_generation": false,
+        "testing": false,
+        "eval_ppl": false,
+        "ppl_dataset": "wikitext2",
+        "log_dir": "./logs",
+        "quantize": false,
+        "calib_data_num": 512,
+        "calib_seqlen": 512,
+        "pretrained_dir": "/deltadisk/congxiao/code/github/Quamba/pretrained_models/ut-enyac",
+        "group_heads": true,
+        "quantize_embedding": false,
+        "quantize_lm_head": false,
+        "apply_gptq": false,
+        "w_bits": 8,
+        "a_bits": 8,
+        "hybrid_blocks": false,
+        "hybrid_blocks_config": null
+    }
+}{
+    "lm_eval": {
+        "lambada_openai": {
+            "perplexity,none": 4.752118767507756,
+            "perplexity_stderr,none": 0.10769845658947765,
+            "acc,none": 0.6499126722297691,
+            "acc_stderr,none": 0.006645501658657037
+        }
+    },
+    "args": {
+        "model": "quamba2-2.7b-w8a8",
+        "verbose": false,
+        "batch_size": 16,
+        "task_list": [
+            "lambada_openai"
+        ],
+        "eval_zero_shot": true,
+        "eval_few_shot": false,
+        "fewshot": 0,
+        "eval_generation": false,
+        "testing": false,
+        "eval_ppl": false,
+        "ppl_dataset": "wikitext2",
+        "log_dir": "./logs",
+        "quantize": false,
+        "calib_data_num": 512,
+        "calib_seqlen": 512,
+        "pretrained_dir": "/deltadisk/congxiao/code/github/Quamba/pretrained_models/ut-enyac",
+        "group_heads": true,
+        "quantize_embedding": false,
+        "quantize_lm_head": false,
+        "apply_gptq": false,
+        "w_bits": 8,
+        "a_bits": 8,
+        "hybrid_blocks": false,
+        "hybrid_blocks_config": null
+    }
+}{
+    "lm_eval": {
+        "lambada_openai": {
+            "perplexity,none": 4.757426201521581,
+            "perplexity_stderr,none": 0.1078282265093071,
+            "acc,none": 0.6460314379972831,
+            "acc_stderr,none": 0.0066622549002909905
+        }
+    },
+    "args": {
+        "model": "quamba2-2.7b-w8a8",
+        "verbose": false,
+        "batch_size": 16,
+        "task_list": [
+            "lambada_openai"
+        ],
+        "eval_zero_shot": true,
+        "eval_few_shot": false,
+        "fewshot": 0,
+        "eval_generation": false,
+        "testing": false,
+        "eval_ppl": false,
+        "ppl_dataset": "wikitext2",
+        "log_dir": "./logs",
+        "quantize": false,
+        "calib_data_num": 512,
+        "calib_seqlen": 512,
+        "pretrained_dir": "/deltadisk/congxiao/code/github/Quamba/pretrained_models/ut-enyac",
+        "group_heads": true,
+        "quantize_embedding": false,
+        "quantize_lm_head": false,
+        "apply_gptq": false,
+        "w_bits": 8,
+        "a_bits": 8,
+        "hybrid_blocks": false,
+        "hybrid_blocks_config": null
+    }
+}{
+    "lm_eval": {
+        "winogrande": {
+            "acc,none": 0.6266771902131019,
+            "acc_stderr,none": 0.013594002763035512
+        }
+    },
+    "args": {
+        "model": "quamba2-2.7b-w8a8",
+        "verbose": false,
+        "batch_size": 16,
+        "task_list": [
+            "winogrande"
+        ],
+        "eval_zero_shot": true,
+        "eval_few_shot": false,
+        "fewshot": 0,
+        "eval_generation": false,
+        "testing": false,
+        "eval_ppl": false,
+        "ppl_dataset": "wikitext2",
+        "log_dir": "./logs",
+        "quantize": false,
+        "calib_data_num": 512,
+        "calib_seqlen": 512,
+        "pretrained_dir": "/deltadisk/congxiao/code/github/Quamba/pretrained_models/ut-enyac",
+        "group_heads": true,
+        "quantize_embedding": false,
+        "quantize_lm_head": false,
+        "apply_gptq": false,
+        "w_bits": 8,
+        "a_bits": 8,
+        "hybrid_blocks": false,
+        "hybrid_blocks_config": null
+    }
+}{
+    "lm_eval": {
+        "winogrande": {
+            "acc,none": 0.6274664561957379,
+            "acc_stderr,none": 0.01358817388852245
+        }
+    },
+    "args": {
+        "model": "quamba2-2.7b-w8a8",
+        "verbose": false,
+        "batch_size": 16,
+        "task_list": [
+            "winogrande"
+        ],
+        "eval_zero_shot": true,
+        "eval_few_shot": false,
+        "fewshot": 0,
+        "eval_generation": false,
+        "testing": false,
+        "eval_ppl": false,
+        "ppl_dataset": "wikitext2",
+        "log_dir": "./logs",
+        "quantize": false,
+        "calib_data_num": 512,
+        "calib_seqlen": 512,
+        "pretrained_dir": "/deltadisk/congxiao/code/github/Quamba/pretrained_models/ut-enyac",
+        "group_heads": true,
+        "quantize_embedding": false,
+        "quantize_lm_head": false,
+        "apply_gptq": false,
+        "w_bits": 8,
+        "a_bits": 8,
+        "hybrid_blocks": false,
+        "hybrid_blocks_config": null
+    }
+}{
+    "lm_eval": {
+        "winogrande": {
+            "acc,none": 0.6219415943172849,
+            "acc_stderr,none": 0.013628165460523234
+        }
+    },
+    "args": {
+        "model": "quamba2-2.7b-w8a8",
+        "verbose": false,
+        "batch_size": 16,
+        "task_list": [
+            "winogrande"
+        ],
+        "eval_zero_shot": true,
+        "eval_few_shot": false,
+        "fewshot": 0,
+        "eval_generation": false,
+        "testing": false,
+        "eval_ppl": false,
+        "ppl_dataset": "wikitext2",
+        "log_dir": "./logs",
+        "quantize": false,
+        "calib_data_num": 512,
+        "calib_seqlen": 512,
+        "pretrained_dir": "/deltadisk/congxiao/code/github/Quamba/pretrained_models/ut-enyac",
+        "group_heads": true,
+        "quantize_embedding": false,
+        "quantize_lm_head": false,
+        "apply_gptq": false,
+        "w_bits": 8,
+        "a_bits": 8,
+        "hybrid_blocks": false,
+        "hybrid_blocks_config": null
+    }
+}{
+    "lm_eval": {
+        "winogrande": {
+            "acc,none": 0.6337805840568271,
+            "acc_stderr,none": 0.013540144376588901
+        }
+    },
+    "args": {
+        "model": "quamba2-2.7b-w8a8",
+        "verbose": false,
+        "batch_size": 16,
+        "task_list": [
+            "winogrande"
+        ],
+        "eval_zero_shot": true,
+        "eval_few_shot": false,
+        "fewshot": 0,
+        "eval_generation": false,
+        "testing": false,
+        "eval_ppl": false,
+        "ppl_dataset": "wikitext2",
+        "log_dir": "./logs",
+        "quantize": false,
+        "calib_data_num": 512,
+        "calib_seqlen": 512,
+        "pretrained_dir": "/deltadisk/congxiao/code/github/Quamba/pretrained_models/ut-enyac",
+        "group_heads": true,
+        "quantize_embedding": false,
+        "quantize_lm_head": false,
+        "apply_gptq": false,
+        "w_bits": 8,
+        "a_bits": 8,
+        "hybrid_blocks": false,
+        "hybrid_blocks_config": null
+    }
+}{
+    "lm_eval": {
+        "lambada_openai": {
+            "perplexity,none": 4.428900123743564,
+            "perplexity_stderr,none": 0.1011795243812944,
+            "acc,none": 0.6644673006015913,
+            "acc_stderr,none": 0.006578339831332733
+        }
+    },
+    "args": {
+        "model": "quamba2-2.7b-w8a8",
+        "verbose": false,
+        "batch_size": 16,
+        "task_list": [
+            "lambada_openai"
+        ],
+        "eval_zero_shot": true,
+        "eval_few_shot": false,
+        "fewshot": 0,
+        "eval_generation": false,
+        "testing": false,
+        "eval_ppl": false,
+        "ppl_dataset": "wikitext2",
+        "log_dir": "./logs",
+        "quantize": false,
+        "calib_data_num": 512,
+        "calib_seqlen": 512,
+        "pretrained_dir": "/deltadisk/congxiao/code/github/Quamba/pretrained_models/ut-enyac",
+        "group_heads": true,
+        "quantize_embedding": false,
+        "quantize_lm_head": false,
+        "apply_gptq": false,
+        "w_bits": 8,
+        "a_bits": 8,
+        "hybrid_blocks": false,
+        "hybrid_blocks_config": null
+    }
+}{
+    "lm_eval": {
+        "lambada_openai": {
+            "perplexity,none": 4.402500271534714,
+            "perplexity_stderr,none": 0.10040889706362865,
+            "acc,none": 0.6621385600620997,
+            "acc_stderr,none": 0.006589551054654384
+        }
+    },
+    "args": {
+        "model": "quamba2-2.7b-w8a8",
+        "verbose": false,
+        "batch_size": 16,
+        "task_list": [
+            "lambada_openai"
+        ],
+        "eval_zero_shot": true,
+        "eval_few_shot": false,
+        "fewshot": 0,
+        "eval_generation": false,
+        "testing": false,
+        "eval_ppl": false,
+        "ppl_dataset": "wikitext2",
+        "log_dir": "./logs",
+        "quantize": false,
+        "calib_data_num": 512,
+        "calib_seqlen": 512,
+        "pretrained_dir": "/deltadisk/congxiao/code/github/Quamba/pretrained_models/ut-enyac",
+        "group_heads": true,
+        "quantize_embedding": false,
+        "quantize_lm_head": false,
+        "apply_gptq": false,
+        "w_bits": 8,
+        "a_bits": 8,
+        "hybrid_blocks": false,
+        "hybrid_blocks_config": null
+    }
+}{
+    "lm_eval": {
+        "lambada_openai": {
+            "perplexity,none": 4.3929708018224884,
+            "perplexity_stderr,none": 0.09983512579610812,
+            "acc,none": 0.6631088686202212,
+            "acc_stderr,none": 0.006584901457755899
+        }
+    },
+    "args": {
+        "model": "quamba2-2.7b-w8a8",
+        "verbose": false,
+        "batch_size": 16,
+        "task_list": [
+            "lambada_openai"
+        ],
+        "eval_zero_shot": true,
+        "eval_few_shot": false,
+        "fewshot": 0,
+        "eval_generation": false,
+        "testing": false,
+        "eval_ppl": false,
+        "ppl_dataset": "wikitext2",
+        "log_dir": "./logs",
+        "quantize": false,
+        "calib_data_num": 512,
+        "calib_seqlen": 512,
+        "pretrained_dir": "/deltadisk/congxiao/code/github/Quamba/pretrained_models/ut-enyac",
+        "group_heads": true,
+        "quantize_embedding": false,
+        "quantize_lm_head": false,
+        "apply_gptq": false,
+        "w_bits": 8,
+        "a_bits": 8,
+        "hybrid_blocks": false,
+        "hybrid_blocks_config": null
+    }
+}{
+    "lm_eval": {
+        "lambada_openai": {
+            "perplexity,none": 5.494974870844707,
+            "perplexity_stderr,none": 0.12689093353194889,
+            "acc,none": 0.6167281195420143,
+            "acc_stderr,none": 0.006773488952018028
+        }
+    },
+    "args": {
+        "model": "quamba2-2.7b-w8a8",
+        "verbose": false,
+        "batch_size": 16,
+        "task_list": [
+            "lambada_openai"
+        ],
+        "eval_zero_shot": true,
+        "eval_few_shot": false,
+        "fewshot": 0,
+        "eval_generation": false,
+        "testing": false,
+        "eval_ppl": false,
+        "ppl_dataset": "wikitext2",
+        "log_dir": "./logs",
+        "quantize": false,
+        "calib_data_num": 512,
+        "calib_seqlen": 512,
+        "pretrained_dir": "/deltadisk/congxiao/code/github/Quamba/pretrained_models/ut-enyac",
+        "group_heads": true,
+        "quantize_embedding": false,
+        "quantize_lm_head": false,
+        "apply_gptq": false,
+        "w_bits": 8,
+        "a_bits": 8,
+        "hybrid_blocks": false,
+        "hybrid_blocks_config": null
+    }
+}{
+    "lm_eval": {
+        "lambada_openai": {
+            "perplexity,none": 5.517508850011939,
+            "perplexity_stderr,none": 0.12726827643589025,
+            "acc,none": 0.6140112555792742,
+            "acc_stderr,none": 0.006782464969031522
+        }
+    },
+    "args": {
+        "model": "quamba2-2.7b-w8a8",
+        "verbose": false,
+        "batch_size": 16,
+        "task_list": [
+            "lambada_openai"
+        ],
+        "eval_zero_shot": true,
+        "eval_few_shot": false,
+        "fewshot": 0,
+        "eval_generation": false,
+        "testing": false,
+        "eval_ppl": false,
+        "ppl_dataset": "wikitext2",
+        "log_dir": "./logs",
+        "quantize": false,
+        "calib_data_num": 512,
+        "calib_seqlen": 512,
+        "pretrained_dir": "/deltadisk/congxiao/code/github/Quamba/pretrained_models/ut-enyac",
+        "group_heads": true,
+        "quantize_embedding": false,
+        "quantize_lm_head": false,
+        "apply_gptq": false,
+        "w_bits": 8,
+        "a_bits": 8,
+        "hybrid_blocks": false,
+        "hybrid_blocks_config": null
+    }
+}{
+    "lm_eval": {
+        "winogrande": {
+            "acc,none": 0.6045777426992897,
+            "acc_stderr,none": 0.013741678387545354
+        }
+    },
+    "args": {
+        "model": "quamba2-2.7b-w8a8",
+        "verbose": false,
+        "batch_size": 16,
+        "task_list": [
+            "winogrande"
+        ],
+        "eval_zero_shot": true,
+        "eval_few_shot": false,
+        "fewshot": 0,
+        "eval_generation": false,
+        "testing": false,
+        "eval_ppl": false,
+        "ppl_dataset": "wikitext2",
+        "log_dir": "./logs",
+        "quantize": false,
+        "calib_data_num": 512,
+        "calib_seqlen": 512,
+        "pretrained_dir": "/deltadisk/congxiao/code/github/Quamba/pretrained_models/ut-enyac",
+        "group_heads": true,
+        "quantize_embedding": false,
+        "quantize_lm_head": false,
+        "apply_gptq": false,
+        "w_bits": 8,
+        "a_bits": 8,
+        "hybrid_blocks": false,
+        "hybrid_blocks_config": null
+    }
+}{
+    "lm_eval": {
+        "winogrande": {
+            "acc,none": 0.6274664561957379,
+            "acc_stderr,none": 0.013588173888522459
+        }
+    },
+    "args": {
+        "model": "quamba2-2.7b-w8a8",
+        "verbose": false,
+        "batch_size": 16,
+        "task_list": [
+            "winogrande"
+        ],
+        "eval_zero_shot": true,
+        "eval_few_shot": false,
+        "fewshot": 0,
+        "eval_generation": false,
+        "testing": false,
+        "eval_ppl": false,
+        "ppl_dataset": "wikitext2",
+        "log_dir": "./logs",
+        "quantize": false,
+        "calib_data_num": 512,
+        "calib_seqlen": 512,
+        "pretrained_dir": "/deltadisk/congxiao/code/github/Quamba/pretrained_models/ut-enyac",
+        "group_heads": true,
+        "quantize_embedding": false,
+        "quantize_lm_head": false,
+        "apply_gptq": false,
+        "w_bits": 8,
+        "a_bits": 8,
+        "hybrid_blocks": false,
+        "hybrid_blocks_config": null
+    }
+}{
+    "lm_eval": {
+        "lambada_openai": {
+            "perplexity,none": 6.49958621737381,
+            "perplexity_stderr,none": 0.16166868378188676,
+            "acc,none": 0.5854841839705026,
+            "acc_stderr,none": 0.006863414211397143
+        }
+    },
+    "args": {
+        "model": "quamba2-2.7b-w8a8",
+        "verbose": false,
+        "batch_size": 16,
+        "task_list": [
+            "lambada_openai"
+        ],
+        "eval_zero_shot": true,
+        "eval_few_shot": false,
+        "fewshot": 0,
+        "eval_generation": false,
+        "testing": false,
+        "eval_ppl": false,
+        "ppl_dataset": "wikitext2",
+        "log_dir": "./logs",
+        "quantize": false,
+        "calib_data_num": 512,
+        "calib_seqlen": 512,
+        "pretrained_dir": "/deltadisk/congxiao/code/github/Trash/Quamba/pretrained_models/ut-enyac",
+        "group_heads": true,
+        "quantize_embedding": false,
+        "quantize_lm_head": false,
+        "apply_gptq": false,
+        "w_bits": 8,
+        "a_bits": 8,
+        "hybrid_blocks": false,
+        "hybrid_blocks_config": null
+    }
+}{
+    "lm_eval": {
+        "lambada_openai": {
+            "perplexity,none": 3.8654383496538878,
+            "perplexity_stderr,none": 0.0883890202431513,
+            "acc,none": 0.6959052978847273,
+            "acc_stderr,none": 0.006409019178962834
+        }
+    },
+    "args": {
+        "model": "quamba2-2.7b-w8a8",
+        "verbose": false,
+        "batch_size": 16,
+        "task_list": [
+            "lambada_openai"
+        ],
+        "eval_zero_shot": true,
+        "eval_few_shot": false,
+        "fewshot": 0,
+        "eval_generation": false,
+        "testing": false,
+        "eval_ppl": false,
+        "ppl_dataset": "wikitext2",
+        "log_dir": "./logs",
+        "quantize": false,
+        "calib_data_num": 512,
+        "calib_seqlen": 512,
+        "pretrained_dir": "/deltadisk/congxiao/code/github/Trash/Quamba/pretrained_models/ut-enyac",
+        "group_heads": true,
+        "quantize_embedding": false,
+        "quantize_lm_head": false,
+        "apply_gptq": false,
+        "w_bits": 8,
+        "a_bits": 8,
+        "hybrid_blocks": false,
+        "hybrid_blocks_config": null
+    }
+}

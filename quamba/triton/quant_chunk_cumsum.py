@@ -1,4 +1,4 @@
-
+from __future__ import annotations
 import math
 
 import torch
@@ -7,6 +7,11 @@ import triton
 import triton.language as tl
 
 from mamba_ssm.ops.triton.softplus import softplus
+from quamba.fxp_units import get_exp_tl, get_softplus_tl
+_exp_tl = get_exp_tl()
+_softplus_tl = get_softplus_tl()
+
+
 
 @triton.autotune(
     configs=[
@@ -58,13 +63,20 @@ def _quant_chunk_cumsum_fwd_kernel(
         dt_bias = tl.load(dt_bias_ptr + offs_h * stride_dt_bias_head, mask=offs_h < nheads, other=0.0).to(tl.float32)
         dt += dt_bias[:, None]
     if DT_SOFTPLUS:
-        dt = softplus(dt)
+        # dt = softplus(dt)
+        dt=_softplus_tl(dt)
     # As of Triton 2.2.0, tl.clamp is not available yet
     # dt = tl.clamp(dt, dt_min, dt_max)
     dt = tl.minimum(tl.maximum(dt, dt_min), dt_max)
     dt = tl.where((offs_h[:, None] < nheads) & (offs_c[None, :] < chunk_size_limit), dt, 0.0)
     tl.store(dt_out_ptrs, dt, mask=(offs_h[:, None] < nheads) & (offs_c[None, :] < chunk_size))
-    A = -tl.exp(tl.load(A_log_scale) * tl.load(A_log_ptrs, mask=offs_h < nheads, other=0.0).to(tl.float32))
+
+    # A = -tl.exp(tl.load(A_log_scale) * tl.load(A_log_ptrs, mask=offs_h < nheads, other=0.0).to(tl.float32))
+    A_log_scale_1 = tl.load(A_log_scale).to(tl.float32)
+    q_A_log = tl.load(A_log_ptr + offs_h * stride_A_head, mask=offs_h < nheads, other=0).to(tl.int8)
+    A = -_exp_tl(q_A_log.to(tl.float32) * A_log_scale_1)
+
+    
     dA = dt * A[:, None]
     dA_cs = tl.cumsum(dA, axis=1)
     tl.store(dA_cs_ptrs, dA_cs, mask=(offs_h[:, None] < nheads) & (offs_c[None, :] < chunk_size))

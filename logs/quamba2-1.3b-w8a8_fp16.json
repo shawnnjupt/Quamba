@@ -1,0 +1,110 @@
+{
+    "lm_eval": {
+        "winogrande": {
+            "acc,none": 0.6069455406471981,
+            "acc_stderr,none": 0.013727276249108439
+        }
+    },
+    "args": {
+        "model": "quamba2-1.3b-w8a8",
+        "verbose": false,
+        "batch_size": 16,
+        "task_list": [
+            "winogrande"
+        ],
+        "eval_zero_shot": true,
+        "eval_few_shot": false,
+        "fewshot": 0,
+        "eval_generation": false,
+        "testing": false,
+        "eval_ppl": false,
+        "ppl_dataset": "wikitext2",
+        "log_dir": "./logs",
+        "quantize": false,
+        "calib_data_num": 512,
+        "calib_seqlen": 512,
+        "pretrained_dir": "/deltadisk/congxiao/model",
+        "group_heads": true,
+        "quantize_embedding": false,
+        "quantize_lm_head": false,
+        "apply_gptq": false,
+        "w_bits": 8,
+        "a_bits": 8,
+        "hybrid_blocks": false,
+        "hybrid_blocks_config": null
+    }
+}{
+    "lm_eval": {
+        "lambada_openai": {
+            "perplexity,none": 8.590065262242828,
+            "perplexity_stderr,none": 0.21273615586518282,
+            "acc,none": 0.5297884727343295,
+            "acc_stderr,none": 0.006953604103874044
+        }
+    },
+    "args": {
+        "model": "quamba2-1.3b-w8a8",
+        "verbose": false,
+        "batch_size": 16,
+        "task_list": [
+            "lambada_openai"
+        ],
+        "eval_zero_shot": true,
+        "eval_few_shot": false,
+        "fewshot": 0,
+        "eval_generation": false,
+        "testing": false,
+        "eval_ppl": false,
+        "ppl_dataset": "wikitext2",
+        "log_dir": "./logs",
+        "quantize": false,
+        "calib_data_num": 512,
+        "calib_seqlen": 512,
+        "pretrained_dir": "/deltadisk/congxiao/model",
+        "group_heads": true,
+        "quantize_embedding": false,
+        "quantize_lm_head": false,
+        "apply_gptq": false,
+        "w_bits": 8,
+        "a_bits": 8,
+        "hybrid_blocks": false,
+        "hybrid_blocks_config": null
+    }
+}{
+    "lm_eval": {
+        "lambada_openai": {
+            "perplexity,none": 5.77051477367891,
+            "perplexity_stderr,none": 0.13999686861177849,
+            "acc,none": 0.6176984281001359,
+            "acc_stderr,none": 0.006770229062388666
+        }
+    },
+    "args": {
+        "model": "quamba2-1.3b-w8a8",
+        "verbose": false,
+        "batch_size": 16,
+        "task_list": [
+            "lambada_openai"
+        ],
+        "eval_zero_shot": true,
+        "eval_few_shot": false,
+        "fewshot": 0,
+        "eval_generation": false,
+        "testing": false,
+        "eval_ppl": false,
+        "ppl_dataset": "wikitext2",
+        "log_dir": "./logs",
+        "quantize": false,
+        "calib_data_num": 512,
+        "calib_seqlen": 512,
+        "pretrained_dir": "/deltadisk/congxiao/model",
+        "group_heads": true,
+        "quantize_embedding": false,
+        "quantize_lm_head": false,
+        "apply_gptq": false,
+        "w_bits": 8,
+        "a_bits": 8,
+        "hybrid_blocks": false,
+        "hybrid_blocks_config": null
+    }
+}

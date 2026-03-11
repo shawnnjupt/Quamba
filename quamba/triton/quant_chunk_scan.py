@@ -5,6 +5,13 @@ import torch
 import triton
 import triton.language as tl
 
+from mamba_ssm.ops.triton.softplus import softplus
+from quamba.fxp_units import get_exp_tl, get_softplus_tl,get_silu_tl
+_exp_tl = get_exp_tl()
+_softplus_tl = get_softplus_tl()
+_silu_tl =get_silu_tl()
+
+
 TRITON_22 = version.parse(triton.__version__) >= version.parse('2.2.0')
 
 
@@ -164,7 +171,8 @@ def _quant_chunk_scan_fwd_kernel(
         z_ptr += pid_b * stride_z_batch + pid_c * chunk_size * stride_z_seqlen + pid_h * stride_z_head
         z_ptrs = z_ptr + (stride_z_seqlen * offs_out_m[:, None] + stride_z_hdim * offs_out_n[None, :])
         z = tl.load(z_scale) * tl.load(z_ptrs, mask=(offs_out_m[:, None] < chunk_size_limit) & (offs_out_n[None, :] < hdim), other=0.0).to(tl.float32)
-        acc *= z * tl.sigmoid(z)
+        # acc *= z * tl.sigmoid(z)
+        acc*=_silu_tl(z)
 
     out_ptr += pid_b * stride_out_batch + pid_c * chunk_size * stride_out_seqlen + pid_h * stride_out_head
     out_ptrs = out_ptr + (stride_out_seqlen * offs_out_m[:, None] + offs_out_n[None, :] * stride_out_hdim)
@@ -323,9 +331,11 @@ def _quamba2_chunk_scan_fwd_kernel(
         C_ptrs = C_ptr + (offs_m[:, None] * stride_C_seqlen + offs_k_dstate[None, :] * stride_C_dstate)
         prev_states_ptrs = prev_states_ptr + (offs_n[None, :] * stride_states_hdim + offs_k_dstate[:, None] * stride_states_dstate)
         if not HAS_SEQ_IDX:
-            scale_m = tl.exp(dA_cs_m)
+            # scale_m = tl.exp(dA_cs_m)
+            scale_m =_exp_tl(dA_cs_m)
         else:
-            scale_m = tl.where(seq_idx_m == seq_idx_prev, tl.exp(dA_cs_m), 0.0)
+            # scale_m = tl.where(seq_idx_m == seq_idx_prev, tl.exp(dA_cs_m), 0.0)
+            scale_m=tl.where(seq_idx_m == seq_idx_prev, _exp_tl(dA_cs_m), 0.0)
         if BLOCK_SIZE_DSTATE <= 128:
             C = tl.load(C_scale_ptr) * tl.load(C_ptrs, mask=(offs_m[:, None] < chunk_size_limit) & (offs_k_dstate[None, :] < dstate), other=0.0)
             prev_states = tl.load(prev_states_ptrs, mask=(offs_k_dstate[:, None] < dstate) & (offs_n[None, :] < hdim), other=0.0)
@@ -373,6 +383,7 @@ def _quamba2_chunk_scan_fwd_kernel(
         # If there's seq_idx, we already set cb[i, j] = 0 for seq_idx[i] != seq_idx[j].
         # So we don't need masking wrt seq_idx here.
         cb *= tl.exp((dA_cs_m[:, None] - dA_cs_k[None, :]))
+        # cb *= _exp_tl((dA_cs_m[:, None] - dA_cs_k[None, :]))
         dt_k = tl.load(dt_ptrs, mask=offs_k < chunk_size - k, other=0.0).to(tl.float32)
         cb *= dt_k
         if IS_CAUSAL:
@@ -407,7 +418,8 @@ def _quamba2_chunk_scan_fwd_kernel(
         z_ptr += pid_b * stride_z_batch + pid_c * chunk_size * stride_z_seqlen + pid_h * stride_z_head
         z_ptrs = z_ptr + (stride_z_seqlen * offs_out_m[:, None] + stride_z_hdim * offs_out_n[None, :])
         z = tl.load(z_scale) * tl.load(z_ptrs, mask=(offs_out_m[:, None] < chunk_size_limit) & (offs_out_n[None, :] < hdim), other=0.0).to(tl.float32)
-        acc *= z * tl.sigmoid(z)
+        # acc *= z * tl.sigmoid(z)
+        acc*=_silu_tl(z)
 
     out_ptr += pid_b * stride_out_batch + pid_c * chunk_size * stride_out_seqlen + pid_h * stride_out_head
     out_ptrs = out_ptr + (stride_out_seqlen * offs_out_m[:, None] + offs_out_n[None, :] * stride_out_hdim)

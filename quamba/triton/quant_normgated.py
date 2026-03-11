@@ -5,6 +5,11 @@ import triton
 assert triton.__version__ >= '3.0.0', f"Triton >= 3.0.0 is requried, but get {triton.__version__}"
 import triton.language as tl
 
+
+from quamba.fxp_units import get_silu_tl
+_silu_tl = get_silu_tl()
+
+
 @triton.heuristics({"HAS_BIAS": lambda args: args["B"] is not None})
 @triton.heuristics({"HAS_Z": lambda args: args["QZ"] is not None})
 @triton.jit
@@ -47,7 +52,29 @@ def _qlayer_norm_fwd_1pass_kernel(
     x = tl.load(X + cols, mask=cols < N, other=0.).to(tl.float32)
     if HAS_Z and not NORM_BEFORE_GATE:
         z = tl.load(QZ + cols, mask=cols < N).to(tl.float32) * Z_scale
-        x *= z * tl.sigmoid(z)
+        # x *= z * tl.sigmoid(z)
+        x*=_silu_tl(z)
+
+        # std_res = z * tl.sigmoid(z)
+        # cust_res = _silu_tl(z)
+        
+        # # 仅在第一个 Program (row=0, group=0) 打印第一个元素 (cols=0)
+        # if row == 0 and group == 0:
+        #     # 提取第一个标量元素
+        #     p_in = tl.sum(tl.where(cols == 0, z, 0.), axis=0)
+        #     p_std = tl.sum(tl.where(cols == 0, std_res, 0.), axis=0)
+        #     p_cust = tl.sum(tl.where(cols == 0, cust_res, 0.), axis=0)
+        #     p_diff = tl.abs(p_cust - p_std)
+        #     p_rel = (p_diff / tl.maximum(tl.abs(p_std), 1e-6)) * 100.0
+        #     is_first_thread = tl.max(tl.where(cols == 0, 1, 0), axis=0) == 1
+        #     # if is_first_thread:
+        #         # tl.device_print("[SiLU Debug] In:",p_in)
+        #         # tl.device_print("Std ", p_rel)
+        #         # tl.device_print("Cust", p_cust)
+        # # --- Debug 逻辑结束 ---
+        # x *= cust_res
+
+
     if not IS_RMS_NORM:
         mean = tl.sum(x, axis=0) / N
         xbar = tl.where(cols < N, x - mean, 0.)
@@ -65,7 +92,8 @@ def _qlayer_norm_fwd_1pass_kernel(
     y = x_hat * w + b if HAS_BIAS else x_hat * w
     if HAS_Z and NORM_BEFORE_GATE:
         z = tl.load(QZ + cols, mask=mask).to(tl.float32) * Z_scale
-        y *= z * tl.sigmoid(z)
+        # y *= z * tl.sigmoid(z)
+        y*=_silu_tl(z)
     if USE_FLOAT16_OUTPUT:
         # Write output
         tl.store(Y + cols, y, mask=mask)

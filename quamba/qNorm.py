@@ -50,6 +50,7 @@ class QRMSNorm(torch.nn.Module):
 
     @torch.no_grad()
     def forward(self, x, residual=None, prenorm=False, residual_in_fp32=False, **kwargs):
+        # print(f"qrmsnorm={x.dtype}")
         x_shape_og = x.shape
         # reshape input data into 2D tensor
         x = x.reshape(-1, x.shape[-1])
@@ -75,6 +76,7 @@ class QRMSNorm(torch.nn.Module):
             residual_dtype=residual_dtype,
             is_rms_norm=True,
         )
+        # print(f"ouput_scale={y.dtype}")
         if self.output_scale is not None:
             y = y.reshape(x_shape_og)
             residual_out = residual_out.reshape(x_shape_og)

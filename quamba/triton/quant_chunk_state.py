@@ -3,6 +3,13 @@ import torch
 import triton
 import triton.language as tl
 
+
+from mamba_ssm.ops.triton.softplus import softplus
+from quamba.fxp_units import get_exp_tl, get_softplus_tl
+_exp_tl = get_exp_tl()
+_softplus_tl = get_softplus_tl()
+
+
 @triton.autotune(
     configs=[
         triton.Config({'BLOCK_SIZE_M': 128, 'BLOCK_SIZE_N': 256, 'BLOCK_SIZE_K': 64}, num_stages=3, num_warps=8),
@@ -239,9 +246,11 @@ def _quamba2_chunk_state_fwd_kernel(
             seq_idx_k = tl.load(seq_idx_ptrs, mask=offs_k < chunk_size_limit - k, other=-1)
         dt_k = tl.load(dt_ptrs, mask=offs_k < chunk_size_limit - k, other=0.0).to(tl.float32)
         if not HAS_SEQ_IDX:
-            scale = tl.exp((dA_cs_last - dA_cs_k)) * dt_k
+            # scale = tl.exp((dA_cs_last - dA_cs_k)) * dt_k
+            scale = _exp_tl((dA_cs_last - dA_cs_k)) * dt_k
         else:
-            scale = tl.where(seq_idx_k == seq_idx_last, tl.exp((dA_cs_last - dA_cs_k)) * dt_k, 0.0)
+            # scale = tl.where(seq_idx_k == seq_idx_last, tl.exp((dA_cs_last - dA_cs_k)) * dt_k, 0.0)
+            scale = tl.where(seq_idx_k == seq_idx_last, _exp_tl((dA_cs_last - dA_cs_k)) * dt_k, 0.0)
         b *= scale[:, None]
         b = b.to(mm_dtype)
         x = x.to(mm_dtype)

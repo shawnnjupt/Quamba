@@ -36,6 +36,18 @@ from .data_loaders import get_loaders
 
 logger = logging.getLogger(__name__)
 
+
+POT_OP_PREFIXES = {
+    "z_act",
+    "x_conv_out",
+    "B_conv_out",
+    "C_conv_out",
+    "dt_act",
+    "ssm_state_act",
+    "ssd_out_act",
+}
+
+
 @torch.no_grad()
 def fuse_ln_linear(norm, linear) -> None:
     """
@@ -224,12 +236,53 @@ def run_quamba_calibration(
     # collect in/output scaling factors for layers, num_layer + lm_head
     act_scales = [{} for _ in range(len(layers) + 1)]
     for i in range(len(layers) + 1):
+        print(f"\n[Layer {i}] observer names:")
         for name, observer in observers[i].items():
+            print("  ", name)
             scale, base = observer.get_quantization_parameters()
+            print("  ", scale)
             # FIXME (HY): hardcode to not use base now
             act_scales[i][name] = scale.to(torch.float32)
     del observers
     return act_scales
+
+@torch.no_grad()
+def round_scale_to_power_of_two(scale, mode="round"):
+    """
+    支持：
+      - torch.Tensor
+      - list (CrossHead / SSD grouped scales)
+    """
+    if torch.is_tensor(scale):
+        eps = 1e-12
+        log2 = torch.log2(scale.clamp(min=eps))
+        if mode == "round":
+            log2 = torch.round(log2)
+        elif mode == "floor":
+            log2 = torch.floor(log2)
+        elif mode == "ceil":
+            log2 = torch.ceil(log2)
+        else:
+            raise ValueError(f"Unknown mode {mode}")
+        return torch.pow(2.0, log2)
+
+    elif isinstance(scale, list):
+        # scale 是 list，每个元素通常是 (h_gsize, ch_gsize, ch_scales)
+        new_scale = []
+        for item in scale:
+            if isinstance(item, tuple):
+                # 保持结构，只改最后的 scale tensor
+                *meta, s = item
+                s_pot = round_scale_to_power_of_two(s, mode)
+                new_scale.append((*meta, s_pot))
+            else:
+                # 极端情况下只是纯 list
+                new_scale.append(round_scale_to_power_of_two(item, mode))
+        return new_scale
+
+    else:
+        raise TypeError(f"Unsupported scale type: {type(scale)}")
+
 
 @torch.no_grad()
 def run_quamba2_calibration(
@@ -364,9 +417,17 @@ def run_quamba2_calibration(
     # collect in/output scaling factors for layers, num_layer + lm_head
     act_scales = [{} for _ in range(len(layers) + 1)]
     for i in range(len(layers) + 1):
+        print(f"\n[Layer {i}] observer names:")
         for name, observer in observers[i].items():
+            print("  ", name)
             scale, base = observer.get_quantization_parameters()
             # FIXME (HY): hardcode to not use base now
+            op_name = name.split(":")[0]
+            if op_name in POT_OP_PREFIXES:
+                scale = round_scale_to_power_of_two(scale, mode="floor")
+            if torch.is_tensor(scale):
+                scale = scale.to(torch.float32)
+            print("  ", scale)
             act_scales[i][name] = scale
 
     return act_scales

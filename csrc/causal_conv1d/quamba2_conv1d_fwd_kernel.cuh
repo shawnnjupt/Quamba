@@ -18,6 +18,98 @@
 /********************************************************/
 
 
+#include <cuda_runtime.h>
+#include <stdint.h>
+
+// 模拟 torch.log2(x).floor()，即寻找最高有效位 (MSB)
+__device__ __forceinline__ int64_t get_msb(int64_t x) {
+    if (x <= 0) return 0;
+    // __clzll 是 CUDA 内置函数，计算 64 位整数前导零个数
+    return 63 - __clzll(x);
+}
+
+// 对应你的 fxp_exp
+__device__ __forceinline__ float cuda_fxp_exp(float x_f) {
+    const int fw = 8;
+    const int64_t scale = 1 << fw;
+    int64_t x_int = (int64_t)(x_f * scale);
+    
+    int64_t y_int = x_int + (x_int >> 1) - (x_int >> 4);
+    int64_t u = y_int >> fw;
+    int64_t v_int = y_int - (u << fw);
+    int64_t approx_2v_int = v_int + scale;
+    
+    int64_t total_shift = u; // 假设 fixed_width == output_fixed_width == 8
+    int64_t output_int;
+    if (total_shift >= 0) output_int = approx_2v_int << total_shift;
+    else output_int = approx_2v_int >> (-total_shift);
+    
+    return (float)output_int / (float)scale;
+}
+
+// 对应你的 fxp_ln (无 slope fix)
+__device__ __forceinline__ float cuda_fxp_ln(float x_f) {
+    const int fw = 8;
+    const int64_t scale = 1 << fw;
+    if (x_f < 1e-9f) x_f = 1e-9f;
+    int64_t x_int = (int64_t)(x_f * scale);
+    
+    int64_t msb_pos = get_msb(x_int);
+    int64_t w = msb_pos - fw;
+    
+    int64_t k_int = (w >= 0) ? (x_int >> w) : (x_int << (-w));
+    int64_t t = k_int - scale;
+    int64_t z_int = (w << fw) + t;
+    
+    int64_t ln_approx = (z_int >> 1) + (z_int >> 3) + (z_int >> 4);
+    return (float)ln_approx / (float)scale;
+}
+
+// 对应你的 fxp_ln_slopefix_w0
+__device__ __forceinline__ float cuda_fxp_ln_slopefix(float x_f) {
+    const int fw = 8;
+    const int64_t scale = 1 << fw;
+    if (x_f < 1e-9f) x_f = 1e-9f;
+    int64_t x_int = (int64_t)(x_f * scale);
+    
+    int64_t msb_pos = get_msb(x_int);
+    int64_t w = msb_pos - fw;
+    
+    int64_t k_int = (w >= 0) ? (x_int >> w) : (x_int << (-w));
+    int64_t t = k_int - scale;
+    
+    // t_alpha = t + t/2 - t/16 + t/64
+    int64_t t_alpha = t + (t >> 1) - (t >> 4) + (t >> 6);
+    int64_t log2k = (w == 0) ? t_alpha : t;
+    
+    int64_t z_int = (w << fw) + log2k;
+    int64_t ln_approx = (z_int >> 1) + (z_int >> 3) + (z_int >> 4);
+    return (float)ln_approx / (float)scale;
+}
+
+
+__device__ __forceinline__ float my_custom_fxp_silu(float x) {
+    // 对应 Python 中的 compute_mask: (x != 0) & (x >= -4)
+    if (x < -4.0f) return 0.0f;
+
+    float a = fabsf(x);
+    
+    // ln_a = fxp_ln(a + 1e-9)
+    float ln_a = cuda_fxp_ln(a);
+    
+    // exp_neg_a = fxp_exp(-a)
+    float exp_neg_a = cuda_fxp_exp(-a);
+    
+    // ln_1p_exp_neg_a = fxp_ln_slopefix_w0(exp_neg_a + 1.0)
+    float ln_1p = cuda_fxp_ln_slopefix(exp_neg_a + 1.0f);
+    
+    // ratio = fxp_exp(ln_a - ln_1p)
+    float ratio = cuda_fxp_exp(ln_a - ln_1p);
+    
+    return (x < 0.0f) ? (x + ratio) : ratio;
+}
+
+
 template<int kNThreads_, int kWidth_, int kChunkSizeL_, bool kIsVecLoad_, typename input_t_, typename weight_t_, int x_headdim_>
 struct quamba2_conv1d_channellast_fwd_kernel_traits {
     // The cache line is 128 bytes, and we try to read 16 bytes per thread.
@@ -242,6 +334,24 @@ void quamba2_conv1d_channellast_fwd_kernel(Quamba2ConvParams params) {
         }
         out_vals[i] = scale_in * tmp + scale_bias * bias_val;
         if (params.silu_activation) {out_vals[i] = out_vals[i] / (1 + expf(-out_vals[i])); }
+
+        // float standard_res=0;
+        // float custom_res=0;
+        // float x_input=0;
+        // if (params.silu_activation) { 
+        //     x_input=out_vals[i];
+        //     custom_res = my_custom_fxp_silu(out_vals[i]); 
+        //     standard_res = out_vals[i] / (1.0f + expf(-out_vals[i]));
+        //     out_vals[i] = custom_res;
+        // }
+        // if (batch_id == 0 && chunk_l_id == 0 && chunk_c_id == 0 && tid == 0) {
+        //     float abs_diff = fabsf(custom_res - standard_res);
+        //     float rel_err = (fabsf(standard_res) > 1e-6f) ? (abs_diff / fabsf(standard_res) * 100.0f) : 0.0f;
+            
+        //     printf("[SiLU Debug] In: %9.4f | Std: %9.4f | Cust: %9.4f | Diff: %9.4f | RelErr: %7.4f%%\n", 
+        //         x_input, standard_res, custom_res, abs_diff, rel_err);
+        // }
+
     }
 
     __syncthreads();

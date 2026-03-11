@@ -47,6 +47,7 @@ def main(args):
         assert os.path.exists(quantized_model_path), f"Quantized model {quantized_model_path} not found"
         if "quamba2-8b" not in args.model: # for mamba or mamba2
             tokenizer = AutoTokenizer.from_pretrained("EleutherAI/gpt-neox-20b", resume_download=None)
+            print("use gpt-neox-20b")
         else:
             # NOTE(hychiang): Special handle for mamba2-8b's tokenizer from NVIDIA Megatron
             tokenizer_ckpt = os.path.join(args.pretrained_dir, args.model, "mt_nlg_plus_multilingual_ja_zh_the_stack_frac_015_256k.model")
@@ -59,6 +60,7 @@ def main(args):
             raise ValueError(f"Unsupport quantizing {args.model}, only supports mamba now")
     elaspe_time = time.time() - start
     model.eval()
+    print(model)
     logging.info(f"Loading model takes: {elaspe_time:.2f} s")
     # logging.info(f"Number of parameters: {sum(p.numel() for p in model.parameters() if p.requires_grad)}")
     param_size = 0
@@ -81,7 +83,12 @@ def main(args):
         attn_mask = tokens.attention_mask.to(device=device)
  
     max_length = input_ids.shape[1] + args.genlen
- 
+    print(f"================================")
+    print(f"gen_information")
+    print(f"input_ids={input_ids.shape[1]}")
+    print(f"gen_len={args.genlen}")
+    print(f"max_length={max_length}")
+    print(f"================================")
     # addtional generate arguments for mamba
     model_kwargs = {}
     if is_mamba:
@@ -155,7 +162,7 @@ if __name__ =='__main__':
         '--promptlen', type=int, default=100,
     )
     parser.add_argument(
-        '--genlen', type=int, default=100,
+        '--genlen', type=int, default=5,
     )
     parser.add_argument(
         '--temperature', type=float, default=1.0,

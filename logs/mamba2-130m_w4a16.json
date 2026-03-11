@@ -1,0 +1,38 @@
+{
+    "lm_eval": {
+        "lambada_openai": {
+            "perplexity,none": 32.01146104989839,
+            "perplexity_stderr,none": 1.132115793372295,
+            "acc,none": 0.3464001552493693,
+            "acc_stderr,none": 0.0066291383373416
+        }
+    },
+    "args": {
+        "model": "/deltadisk/congxiao/model/mamba2-130m",
+        "verbose": false,
+        "batch_size": 16,
+        "task_list": [
+            "lambada_openai"
+        ],
+        "eval_zero_shot": true,
+        "eval_few_shot": false,
+        "fewshot": 0,
+        "eval_generation": false,
+        "testing": false,
+        "eval_ppl": false,
+        "ppl_dataset": "wikitext2",
+        "log_dir": "logs",
+        "quantize": true,
+        "calib_data_num": 512,
+        "calib_seqlen": 512,
+        "pretrained_dir": "./pretrained_models",
+        "group_heads": true,
+        "quantize_embedding": true,
+        "quantize_lm_head": true,
+        "apply_gptq": true,
+        "w_bits": 4,
+        "a_bits": 16,
+        "hybrid_blocks": false,
+        "hybrid_blocks_config": null
+    }
+}
